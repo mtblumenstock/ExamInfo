@@ -1,0 +1,62 @@
+---
+title: "ExamInfo-Vignette"
+author: "Melinda Blumenstock"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{ExamInfo-Vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+This package, ExamInfo, is for analyzing data containing demographics and exam scores. Its sample dataset, exams.csv, has a list of students (signified by gender) and the exam score of each (with Math, Reading, and Writing sections, similar to the SAT). There is also information on each student's race/ethnicity, lunch status, level of parental education, and whether or not they have completed a test prep course. The package was created with this dataset in mind, but it is (mostly) generalizable to any simliar dataset containing exam info and at lesat one column of information. This package is helpful to any school official (or someone in a corporation like Collegeboard) who is interested in seeing the effects demographics can have on exam scores. Do people of one race generally do better on reading exams than people of another? How effective is a test prep course at increasing your total score? These kinds of questions can be answered with this package.
+
+The first function, getTotalScoreColumn(), takes three different scores and adds them together. It was created to emulate the SAT (combining math, reading, and writing), but it can be used to add scores of any three subjects and returns a dataframe with the Totals appended as the last column. One just needs to use the proper format when inputting the arguments (dataframe$scoreList) so the function can read your csv properly.
+```{r}
+library(ExamInfo)
+data(package = "ExamInfo")
+exams <- as.data.frame(exams)
+head(exams)
+newData <- getTotalScoreColumn(exams$math.score, exams$reading.score, exams$writing.score, exams)
+head(newData)
+```
+The second function, getAverage(), is useful when you want to know more about how a particular demographic group did, on average a section of a test. For arguments, it takes the column name, the group name, the dataframe, and the subject name. It returns the average of that particular group's scores. 
+For instance, how did students who identify as female do on the math section compared to students who identify as male? Let's see:
+```{r}
+getAverage(exams$gender, "female", exams, "math.score")
+getAverage(exams$gender, "male", exams, "math.score")
+
+```
+
+Note the subject argument is NOT exams$math.score, but "math.score". This is because the function filters out a new dataframe and needs to keep the same subject name (whatever it may be). Keeping it in character form helps increase generalizability.
+
+The third function, plot(), is for when you want to visualize the scores of two different groups under the same column on a particular subject. It takes two groups, the column name, the dataframe, the subject's score list, and two colors of the user's choice. It returns a dotplot. For columns where there are only two choices, such as male or female in exams$gender, a simple dotchart() would suffice, but this function is especially useful when you would like to know about two groups from a column where there are more than two groups, like Race/Ethnicity or Parental Level of Education. Let's take a look at the total scores for group A and group B, two different race/ethnicities.
+
+First we need to use newData since that has the Total scores attached.
+Then:
+```{r, setup, fig.width = 6, fig.height = 5}
+plot("group A", "group B", "race.ethnicity", newData, "total.score", "red", "blue")
+```
+
+Here, we see that the data for Group B is much more variable than that of Group A, something we might not be able to see just by looking at the dataset.
+
+We can also look for math scores of the people who didn't take the test prep course and the people who did:
+```{r, fig.width = 6, fig.height = 5}
+plot("completed", "none", "test.preparation.course", exams, "math.score", "yellow", "purple")
+```
+  
+  However, it's always good to check with getAverage(), because the look of the plots might be deceiving.
+```{r}
+getAverage(exams$test.preparation.course, "completed", exams, "math.score")
+getAverage(exams$test.preparation.course, "none", exams, "math.score")
+```
+
+Once again, the subject parameter must be in "math.score" form. This time, the column must also be in "gender" form, NOT exams$gender. This is also to maximize generalizability.
+
+There is definitely much more that can be added to this package, but these three functions are a great start for preliminary analysis of your scores dataset.
